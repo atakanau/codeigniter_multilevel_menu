@@ -240,6 +240,29 @@ class Multi_menu {
 	 */
 	private $uri_segment             = 1;
 	
+	/**
+	 * Root link
+	 * false 	: site_url($slug) 	- Ex:	http://localhost/[slug]
+	 * 
+	 * string	: [value][slug] 	- Ex:	'/'		= >		/[slug]
+	 * 										'../'	= >		../[slug]
+	 * 
+	 * @var string
+	 */
+	private $root_link				= false;
+	
+	/**
+	 * Hierarchical link
+	 * false 	:	/[root1]
+	 * 				/[root1_sub1]
+	 * 
+	 * true 	:	/[root1]
+	 * 				/[root1]/[root1_sub1]
+	 * 
+	 * @var boolean
+	 */
+	private $hierarchical_link		= false;
+	
 
 	/**
 	 * load configuration on config/multi_menu.php
@@ -335,7 +358,7 @@ class Multi_menu {
      * @param  int 		$parent parent of items
      * @return array         
      */
-    private function prepare_items(array $data, $parent = null)
+    private function prepare_items(array $data, $parent = false)
     {
     	$items = array();
 
@@ -374,7 +397,7 @@ class Multi_menu {
      * @param  string &$html  html menu
      * @return void         
      */
-    private function render_item($items, &$html = '')
+    private function render_item($items, &$html = '', $hierarchy=false)
 	{	    
 	    if ( empty($html) ) 
 	    {
@@ -434,12 +457,12 @@ class Multi_menu {
 						$item_anchor = $this->parent_anchor;
 		        	}
 
-					$href  = '#';				
+					$href = $this->hierarchical_link ?( $this->root_link?$this->root_link.$hierarchy . '/' . $slug:site_url($hierarchy . '/' . $slug) ): '#';
 		        }
 		        else 
 		        {
 		        	$tag_open    = $this->item_tag_open;
-					$href        = site_url($slug);
+					$href        = $this->root_link?$this->root_link.$hierarchy . '/' . $slug:site_url($hierarchy . '/' . $slug);
 					$item_anchor = $this->item_anchor;
 		        }
 
@@ -454,7 +477,7 @@ class Multi_menu {
 
 		        if ( $has_children ) 
 		        {	        	
-		            $this->render_item($item['children'], $html);
+		            $this->render_item($item['children'], $html, $this->hierarchical_link ? $hierarchy.'/'.$slug : false);
 
 		            if ( is_null($item[$this->menu_parent]) && $this->parentl1_tag_close != '' ) {
 		        		$html .= $this->parentl1_tag_close;
@@ -491,7 +514,7 @@ class Multi_menu {
 	 * @param  string $position position where the additiona menu item would be placed (fist or last)
 	 * @return Multi_menu           
 	 */
-	public function inject_item($item, $position = null)
+	public function inject_item($item, $position = false)
 	{
 		if (empty($position)) {
 			$position = 'last';
